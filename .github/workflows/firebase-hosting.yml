@@ -1,0 +1,80 @@
+name: Firebase Hosting
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'studio/**'
+      - '.github/workflows/firebase-hosting.yml'
+  pull_request:
+    paths:
+      - 'studio/**'
+      - '.github/workflows/firebase-hosting.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-hosting-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: node scripts/check-portfolio.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm run test:firestore
+      - run: npm run build:firebase
+      - run: node scripts/check-firebase.mjs
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: firebase-hosting
+          path: studio/dist-firebase
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: firebase-hosting
+      url: https://paradox-software.web.app
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: firebase-hosting
+          path: studio/dist-firebase
+      - name: Require Firebase deployment credential
+        env:
+          FIREBASE_DEPLOY_CREDENTIAL: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AMMARPORTFOLIOWEB }}
+        run: |
+          if [ -z "$FIREBASE_DEPLOY_CREDENTIAL" ]; then
+            echo "::error::Add repository secret FIREBASE_SERVICE_ACCOUNT_AMMARPORTFOLIOWEB to enable Firebase Hosting deployment."
+            exit 1
+          fi
+      - name: Deploy only paradox-software
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_AMMARPORTFOLIOWEB }}
+          projectId: ammarportfolioweb
+          entryPoint: studio
+          target: paradox-software
+          channelId: live
+          firebaseToolsVersion: 15.34.2

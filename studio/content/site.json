@@ -1,0 +1,28 @@
+{
+  "company": {
+    "headline": "Ideas into apps.\nPossibilities into reality.",
+    "intro": "Welcome to ParadoXSoftware. Discover our applications for the devices you use every day.",
+    "email": "",
+    "about": {
+      "blocks": [
+        {
+          "type": "paragraph",
+          "data": {
+            "text": "ParadoXSoftware develops applications across mobile, desktop, and the web. This is our home for sharing what we build."
+          }
+        }
+      ]
+    }
+  },
+  "apps": [
+    {
+      "id": "081426d9-81f4-45a1-9b94-45d64c53a322",
+      "category": "Personal project",
+      "platforms": [
+        "Android"
+      ],
+      "color": "mint",
+      "personalProjectId": "8bbbdSBLprUqkY9alyjV"
+    }
+  ]
+}

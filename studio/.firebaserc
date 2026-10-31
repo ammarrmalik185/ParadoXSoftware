@@ -1,0 +1,8 @@
+{
+  "projects": { "default": "ammarportfolioweb" },
+  "targets": {
+    "ammarportfolioweb": {
+      "hosting": { "paradox-software": ["paradox-software"] }
+    }
+  }
+}

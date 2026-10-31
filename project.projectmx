@@ -1,0 +1,10 @@
+{
+  "format": "projectmx",
+  "version": 1,
+  "tracking": {
+    "url": "https://paradox-software.youtrack.cloud",
+    "type": "youtrack",
+    "project_id": "0-8",
+    "project_key": "PS"
+  }
+}

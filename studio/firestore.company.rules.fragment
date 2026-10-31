@@ -1,0 +1,98 @@
+// Merge these matches INSIDE the existing /databases/{database}/documents block.
+// This is a fragment, deliberately not a deployable replacement for existing rules.
+// Keep the existing personal-project matches unchanged.
+// Also exclude these two collections from any catch-all WRITE grant, as shown
+// in firestore.rules. Adding this fragment alone cannot override a broader allow.
+
+function isParadoxEditor() {
+  return request.auth != null
+    && request.auth.uid == 'Lyc9SMw7dGPhtkbHMw8QADWgmFc2';
+}
+
+function validCompanyPlatform(name) {
+  return name is string && name.matches('\\S([^\\r\\n\\t]{0,38}\\S)?')
+    && name.lower() != 'all apps';
+}
+
+function validCompanyPlatforms(values) {
+  let count = values.size();
+  return values is list && count > 0 && count <= 20
+    && values.toSet().size() == count
+    && (count <= 0 || validCompanyPlatform(values[0]))
+    && (count <= 1 || validCompanyPlatform(values[1]))
+    && (count <= 2 || validCompanyPlatform(values[2]))
+    && (count <= 3 || validCompanyPlatform(values[3]))
+    && (count <= 4 || validCompanyPlatform(values[4]))
+    && (count <= 5 || validCompanyPlatform(values[5]))
+    && (count <= 6 || validCompanyPlatform(values[6]))
+    && (count <= 7 || validCompanyPlatform(values[7]))
+    && (count <= 8 || validCompanyPlatform(values[8]))
+    && (count <= 9 || validCompanyPlatform(values[9]))
+    && (count <= 10 || validCompanyPlatform(values[10]))
+    && (count <= 11 || validCompanyPlatform(values[11]))
+    && (count <= 12 || validCompanyPlatform(values[12]))
+    && (count <= 13 || validCompanyPlatform(values[13]))
+    && (count <= 14 || validCompanyPlatform(values[14]))
+    && (count <= 15 || validCompanyPlatform(values[15]))
+    && (count <= 16 || validCompanyPlatform(values[16]))
+    && (count <= 17 || validCompanyPlatform(values[17]))
+    && (count <= 18 || validCompanyPlatform(values[18]))
+    && (count <= 19 || validCompanyPlatform(values[19]));
+}
+
+function validParadoxMetadata(app, projectId) {
+  return app is map && app.id == projectId
+    && app.category is string && app.category.size() > 0 && app.category.size() <= 60
+    && app.platforms is list
+    && app.color in ['mint', 'peach', 'lavender', 'blue'];
+}
+
+function validParadoxProject(projectId) {
+  let data = request.resource.data;
+  let app = data.application;
+  return data.keys().hasAll(['application', 'personalProjectRef', 'updatedAt', 'updatedBy'])
+    && data.keys().hasOnly(['application', 'personalProjectRef', 'updatedAt', 'updatedBy'])
+    && data.updatedBy == request.auth.uid && data.updatedAt == request.time
+    && validParadoxMetadata(app, projectId)
+    && (('personalProjectId' in app)
+      ? (app.platforms.size() <= 6
+    && app.platforms.hasOnly(['Android', 'Web', 'iOS', 'Windows', 'macOS', 'Linux'])
+    && app.keys().hasAll(['id', 'category', 'platforms', 'color', 'personalProjectId'])
+        && app.keys().hasOnly(['id', 'category', 'platforms', 'color', 'personalProjectId'])
+        && app.personalProjectId is string && app.personalProjectId.matches('[A-Za-z0-9_-]{1,150}')
+        && data.personalProjectRef == /databases/$(database)/documents/projects/$(app.personalProjectId))
+      : (data.personalProjectRef == null
+        && validCompanyPlatforms(app.platforms)
+        && app.keys().hasAll(['id', 'name', 'tagline', 'category', 'platforms', 'url', 'icon', 'color', 'description'])
+        && app.keys().hasOnly(['id', 'name', 'tagline', 'category', 'platforms', 'url', 'icon', 'color', 'description', 'repositoryUrl'])
+        && app.name is string && app.name.size() > 0 && app.name.size() <= 100
+        && app.tagline is string && app.tagline.size() > 0 && app.tagline.size() <= 250
+        && app.url is string && app.url.size() <= 2000 && (app.url == '' || app.url.matches('https?://.*'))
+        && app.icon is string && app.icon.size() <= 2000 && (app.icon == '' || app.icon.matches('https?://.*'))
+        && (!('repositoryUrl' in app) || (app.repositoryUrl is string && app.repositoryUrl.size() <= 2000 && (app.repositoryUrl == '' || app.repositoryUrl.matches('https?://.*'))))
+        && app.description is map && app.description.blocks is list && app.description.blocks.size() <= 100));
+}
+
+match /paradoxSoftwareProjects/{projectId} {
+  allow read: if true;
+  allow create, update: if isParadoxEditor() && validParadoxProject(projectId);
+  allow delete: if isParadoxEditor();
+}
+
+match /paradoxSoftwareSettings/{settingsId} {
+  allow read: if settingsId == 'catalog';
+  allow create, update: if settingsId == 'catalog' && isParadoxEditor()
+    && request.resource.data.keys().hasAll(['company', 'revision', 'updatedAt', 'updatedBy'])
+    && request.resource.data.keys().hasOnly(['company', 'revision', 'updatedAt', 'updatedBy'])
+    && request.resource.data.updatedBy == request.auth.uid
+    && request.resource.data.updatedAt == request.time
+    && request.resource.data.revision is int && request.resource.data.revision > 0
+    && request.resource.data.company is map
+    && request.resource.data.company.keys().hasOnly(['headline', 'intro', 'email', 'about'])
+    && request.resource.data.company.headline is string && request.resource.data.company.headline.size() <= 150
+    && request.resource.data.company.intro is string && request.resource.data.company.intro.size() <= 500
+    && request.resource.data.company.email is string
+    && request.resource.data.company.about is map
+    && request.resource.data.company.about.blocks is list;
+  allow delete: if false;
+}

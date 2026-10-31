@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+process.env.DEPLOY_TARGET='firebase';
+process.env.PAGES_BASE_PATH='/';
+const config=JSON.parse(fs.readFileSync('firebase.json','utf8'));
+const targets=JSON.parse(fs.readFileSync('.firebaserc','utf8'));
+assert.equal(config.hosting.target,'paradox-software');
+assert.equal(config.hosting.public,'dist-firebase');
+assert.deepEqual(targets.targets.ammarportfolioweb.hosting['paradox-software'],['paradox-software']);
+assert.deepEqual(Object.keys(config),['hosting'],'Hosting deploy configuration must not deploy other Firebase services');
+await import('./check-pages.mjs');
+console.log('PASS: Firebase deployment is scoped exclusively to Hosting site paradox-software.');

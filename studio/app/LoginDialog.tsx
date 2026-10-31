@@ -1,0 +1,13 @@
+'use client';
+import { useState, type FormEvent } from 'react';
+import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { LoaderCircle, X } from 'lucide-react';
+import { getFirebaseClient } from './firebase-client';
+
+export default function LoginDialog({onClose}:{onClose:()=>void}) {
+ const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ function explain(error:unknown){const code=(error as {code?:string}).code;return code==='auth/unauthorized-domain'?'Add this website domain to Firebase Authentication → Settings → Authorized domains.':code==='auth/operation-not-allowed'?'Enable this sign-in provider in Firebase Authentication.':code==='auth/invalid-credential'?'The email or password is incorrect.':code==='auth/popup-blocked'?'Allow the sign-in popup and try again.':code==='auth/popup-closed-by-user'?'Sign-in was cancelled.':code==='auth/account-exists-with-different-credential'?'Use the sign-in method already associated with your portfolio account.':'Unable to sign in. Please check your credentials and try again.';}
+ async function login(action:()=>Promise<unknown>){setBusy(true);setError('');try{await action();onClose();}catch(error){setError(explain(error));}finally{setBusy(false);}}
+ function emailLogin(event:FormEvent){event.preventDefault();login(()=>signInWithEmailAndPassword(getFirebaseClient().auth,email,password));}
+ return <div className="overlay"><section className="modal login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="close" onClick={onClose} disabled={busy} aria-label="Close sign in"><X/></button><p className="eyebrow">PARADOXSOFTWARE / SIGN IN</p><h2 id="login-title">Your projects. Your control.</h2><p className="editor-help">Sign in with your existing portfolio account to manage the company catalog. Visitors can browse without signing in.</p><button className="button light google-login" disabled={busy} onClick={()=>login(()=>signInWithPopup(getFirebaseClient().auth,new GoogleAuthProvider()))}>Continue with Google</button><div className="login-divider">or use your portfolio email</div><form onSubmit={emailLogin}><label>Email<input autoFocus autoComplete="username" type="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label><label>Password<input autoComplete="current-password" type="password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>{error&&<p className="form-error" role="alert">{error}</p>}<button className="button dark" disabled={busy}>{busy&&<LoaderCircle className="spin" size={16}/>} {busy?'Signing in…':'Sign in'}</button></form></section></div>;
+}
