@@ -1,11 +1,6 @@
 name: Firebase Hosting
 
 on:
-  push:
-    branches: [main, master]
-    paths:
-      - 'studio/**'
-      - '.github/workflows/firebase-hosting.yml'
   pull_request:
     paths:
       - 'studio/**'
@@ -43,13 +38,13 @@ jobs:
       - run: npm run build:firebase
       - run: node scripts/check-firebase.mjs
       - uses: actions/upload-artifact@v4
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         with:
           name: firebase-hosting
           path: studio/dist-firebase
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     environment:
