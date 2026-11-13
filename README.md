@@ -10,6 +10,12 @@ Authentication is enforced in the UI and in the deployed Firestore rules. Closin
 
 In **Content studio → Link personal project**, select one or more projects using the checkboxes, then choose **Link selected projects**. Selection is preserved while searching; **Select all visible** selects matching, unlinked projects. Already linked projects cannot be selected again. The selected links are saved together in one transaction, and a failed save keeps the selection available to retry.
 
+## Application feedback
+
+The public **Contact → Application feedback** section opens the YouTrack feedback form for bug reports, feature requests, and application feedback. The labeled button opens a centered, scrollable dialog with keyboard focus management with the YouTrack form rendered inline in its dark theme. The embed is configured in `studio/app/ApplicationFeedback.tsx` with the ParadoXSoftware YouTrack backend, form ID, and English language. The app checks that the form configuration is accessible before mounting the form and offers a direct YouTrack form link in the dialog. If the embedded form cannot load, visitors can use the direct link or retry. Company editor and login form styles are scoped to `.studio-form` so they do not override the embedded form's inputs or headings.
+
+For the popup to work, open the YouTrack project's **Settings → Channels → Online Forms → General Feedback Forum → Embed**, then add the actual hosting domains under **Target domains**: `paradox-software.web.app`, `paradox-software.firebaseapp.com`, and `ammarrmalik185.github.io`. Add `localhost:5173` for local development. Enter domains without a protocol or path. YouTrack's form API currently omits the required `Access-Control-Allow-Origin` header for these origins, which causes the generic form-loading error in browsers. The direct form link works without cross-origin API access. See [YouTrack's online form setup documentation](https://www.jetbrains.com/help/youtrack/cloud/helpdesk-online-forms.html).
+
 ## Company storage and personal-project links
 
 Company entries live in `paradoxSoftwareProjects/{companyProjectId}`. Company information and the shared catalog revision live in `paradoxSoftwareSettings/catalog`. Imported entries store only a `personalProjectRef` reference to `projects/{personalProjectId}`, the source ID, and company-specific platforms/category/card color. Source titles, descriptions, images, and URLs are never copied into imported entries. Standalone company projects store their own details.
